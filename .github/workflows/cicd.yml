@@ -65,7 +65,7 @@ jobs:
         if: github.head_ref
         run: >
           ./mvnw -B com.google.cloud.tools:jib-maven-plugin:2.0.0:build
-          -Dimage=haopoboy/${{ DOCKER_REPO }}:pr-${{ github.event.number }}
+          -Dimage=haopoboy/$DOCKER_REPO:pr-${{ github.event.number }}
           -Djib.to.auth.username=${{ secrets.DOCKER_USERNAME }}
           -Djib.to.auth.password=${{ secrets.DOCKER_PASSWORD }}
           -Djib.container.ports=8080
@@ -77,14 +77,14 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           status: ${{ job.status }}
           deployment_id: ${{ steps.deployment.outputs.deployment_id }}
-          env_url: https://hub.docker.com/repository/docker/haopoboy/${{ DOCKER_REPO }}/tags?name=pr-${{github.event.number}}
+          env_url: https://hub.docker.com/repository/docker/haopoboy/$DOCKER_REPO/tags?name=pr-${{github.event.number}}
           
       # Push dev
       - name: Deploy dev to DockerHub
         if: github.ref =='refs/heads/dev'
         run: >
           ./mvnw -B com.google.cloud.tools:jib-maven-plugin:2.0.0:build
-          -Dimage=haopoboy/${{ DOCKER_REPO }}:dev
+          -Dimage=haopoboy/$DOCKER_REPO:dev
           -Djib.to.auth.username=${{ secrets.DOCKER_USERNAME }}
           -Djib.to.auth.password=${{ secrets.DOCKER_PASSWORD }}
           -Djib.container.ports=8080
@@ -96,14 +96,14 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           status: ${{ job.status }}
           deployment_id: ${{ steps.deployment.outputs.deployment_id }}
-          env_url: https://hub.docker.com/repository/docker/haopoboy/${{ DOCKER_REPO }}/tags?name=dev
+          env_url: https://hub.docker.com/repository/docker/haopoboy/$DOCKER_REPO/tags?name=dev
           
       # Push master
       - name: Deploy master to DockerHub
         if: github.ref =='refs/heads/master'
         run: >
           ./mvnw -B com.google.cloud.tools:jib-maven-plugin:2.0.0:build
-          -Dimage=haopoboy/${{ DOCKER_REPO }}
+          -Dimage=haopoboy/$DOCKER_REPO
           -Djib.to.auth.username=${{ secrets.DOCKER_USERNAME }}
           -Djib.to.auth.password=${{ secrets.DOCKER_PASSWORD }}
           -Djib.container.ports=8080
@@ -115,4 +115,4 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           status: ${{ job.status }}
           deployment_id: ${{ steps.deployment.outputs.deployment_id }}
-          env_url: https://hub.docker.com/repository/docker/haopoboy/${{ DOCKER_REPO }}/tags?name=latest
+          env_url: https://hub.docker.com/repository/docker/haopoboy/$DOCKER_REPO/tags?name=latest
