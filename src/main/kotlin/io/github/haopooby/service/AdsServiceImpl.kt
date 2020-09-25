@@ -20,6 +20,7 @@ class AdsServiceImpl : AdsService {
 
     override fun exposeFor(userId: String): Ads {
         val ads = exposeValid(userId)
+        // Able to restore from scheduler
         GlobalScope.launch {
             exposedRepository.save(Exposed(userId, ads.id))
         }
