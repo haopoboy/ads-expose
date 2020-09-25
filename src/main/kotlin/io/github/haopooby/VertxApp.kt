@@ -36,7 +36,7 @@ class VertxApp : CoroutineVerticle(), ApplicationListener<ApplicationReadyEvent>
         val router = Router.router(vertx).apply {
             this.get("/empty").coroutineHandler { it.response().end("empty") }
             this.get("/exposeTo").coroutineHandler {
-                adsService.exposeTo((1..100).random().toString())
+                adsService.exposeFor((1..100).random().toString())
             }
         }
 
