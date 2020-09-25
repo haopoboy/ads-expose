@@ -2,6 +2,7 @@ package io.github.haopooby
 
 import io.github.haopooby.entity.Ads
 import io.github.haopooby.entity.AdsRepository
+import io.github.haopooby.service.CacheService
 import me.tongfei.progressbar.ProgressBar
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
@@ -19,8 +20,12 @@ class DataInitializer : ApplicationListener<ApplicationReadyEvent> {
     @Autowired
     private lateinit var adsRepository: AdsRepository
 
+    @Autowired
+    private lateinit var cacheService: CacheService
+
     override fun onApplicationEvent(p0: ApplicationReadyEvent) {
         initAds()
+        initCaches()
     }
 
     fun initAds() {
@@ -40,5 +45,17 @@ class DataInitializer : ApplicationListener<ApplicationReadyEvent> {
         }
 
         logger.info("${Utils.formatAsDecimal(adsRepository.count())} Ads persisted")
+    }
+
+    fun initCaches() {
+        val ads = cacheService.ads()
+        val count = adsRepository.count()
+        ProgressBar("Caching Ads", count).use { progress ->
+            adsRepository.findAll().forEachIndexed { index, it ->
+                ads.put(index, it)
+                progress.step()
+            }
+        }
+        logger.info("${Utils.formatAsDecimal(count)} Ads cached")
     }
 }
