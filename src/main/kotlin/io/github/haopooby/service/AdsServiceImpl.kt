@@ -27,6 +27,9 @@ class AdsServiceImpl : AdsService {
         return ads
     }
 
+    /**
+     * Random expose Ads until it's allowed.
+     */
     fun exposeValid(userId: String): Ads {
         var ads: Ads
         var counter: Counter
