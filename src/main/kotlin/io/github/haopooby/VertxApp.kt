@@ -64,7 +64,7 @@ class VertxApp : CoroutineVerticle(), ApplicationListener<ApplicationReadyEvent>
         if (properties.enable) {
             val vertx = Vertx.vertx()!!
             vertx.deployVerticle(this::class.java.name)
-            logger.info("vertx deployed")
+            logger.info("Vertx deployed")
         }
     }
 }
