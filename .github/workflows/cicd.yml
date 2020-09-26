@@ -78,7 +78,7 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           status: ${{ job.status }}
           deployment_id: ${{ steps.deployment.outputs.deployment_id }}
-          env_url: https://hub.docker.com/repository/docker/haopoboy/$DOCKER_REPO/tags?name=pr-${{github.event.number}}
+          env_url: https://hub.docker.com/repository/docker/haopoboy/${{ env.DOCKER_REPO }}/tags?name=pr-${{github.event.number}}
           
       # Push dev
       - name: Deploy dev to DockerHub
@@ -97,7 +97,7 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           status: ${{ job.status }}
           deployment_id: ${{ steps.deployment.outputs.deployment_id }}
-          env_url: https://hub.docker.com/repository/docker/haopoboy/$DOCKER_REPO/tags?name=dev
+          env_url: https://hub.docker.com/repository/docker/haopoboy/${{ env.DOCKER_REPO }}/tags?name=dev
           
       # Push master
       - name: Deploy master to DockerHub
@@ -116,4 +116,4 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           status: ${{ job.status }}
           deployment_id: ${{ steps.deployment.outputs.deployment_id }}
-          env_url: https://hub.docker.com/repository/docker/haopoboy/$DOCKER_REPO/tags?name=latest
+          env_url: https://hub.docker.com/repository/docker/haopoboy/${{ env.DOCKER_REPO }}/tags?name=latest
