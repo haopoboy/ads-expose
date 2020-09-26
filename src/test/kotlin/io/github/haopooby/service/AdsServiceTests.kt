@@ -19,6 +19,9 @@ class AdsServiceTests {
     fun exposeFor() {
         val ads = impl.exposeFor((1..100).random().toString())
         assertThat(ads).isNotNull
+
+        // Wait for coroutines
+        Thread.sleep(2000)
         assertThat(exposedRepository.count()).isNotZero()
     }
 
