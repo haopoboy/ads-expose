@@ -3,6 +3,7 @@ package io.github.haopooby
 import io.github.haopooby.config.VertxProperties
 import io.github.haopooby.service.AdsService
 import io.vertx.core.Vertx
+import io.vertx.core.json.Json
 import io.vertx.ext.web.Route
 import io.vertx.ext.web.Router
 import io.vertx.ext.web.RoutingContext
@@ -13,6 +14,7 @@ import kotlinx.coroutines.launch
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.context.event.ApplicationReadyEvent
+import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationListener
 import org.springframework.stereotype.Component
 
@@ -22,6 +24,9 @@ class VertxApp : CoroutineVerticle(), ApplicationListener<ApplicationReadyEvent>
     companion object {
         val logger = LoggerFactory.getLogger(this::class.java)!!
     }
+
+    @Autowired
+    private lateinit var applicationContext: ApplicationContext
 
     @Autowired
     private lateinit var adsService: AdsService
@@ -34,7 +39,9 @@ class VertxApp : CoroutineVerticle(), ApplicationListener<ApplicationReadyEvent>
         val router = Router.router(vertx).apply {
             this.get("/empty").coroutineHandler { it.response().end("empty") }
             this.get("/exposeTo").coroutineHandler {
-                adsService.exposeFor((1..100).random().toString())
+                it.response().end(Json.encode(
+                        adsService.exposeFor((1..100).random().toString())
+                ))
             }
         }
 
@@ -55,6 +62,7 @@ class VertxApp : CoroutineVerticle(), ApplicationListener<ApplicationReadyEvent>
                     fn(ctx)
                 } catch (e: Exception) {
                     ctx.fail(e)
+                    logger.info("Catch exception", e)
                 }
             }
         }
@@ -63,7 +71,7 @@ class VertxApp : CoroutineVerticle(), ApplicationListener<ApplicationReadyEvent>
     override fun onApplicationEvent(p0: ApplicationReadyEvent) {
         if (properties.enable) {
             val vertx = Vertx.vertx()!!
-            vertx.deployVerticle(this::class.java.name)
+            vertx.deployVerticle(applicationContext.getBean(this::class.java))
             logger.info("Vertx deployed")
         }
     }
