@@ -1,7 +1,9 @@
 package io.github.haopooby
 
+import io.github.haopooby.config.VertxProperties
 import io.github.haopooby.service.AdsService
 import io.vertx.core.Vertx
+import io.vertx.core.json.Json
 import io.vertx.ext.web.Route
 import io.vertx.ext.web.Router
 import io.vertx.ext.web.RoutingContext
@@ -11,9 +13,8 @@ import io.vertx.kotlin.coroutines.dispatcher
 import kotlinx.coroutines.launch
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.beans.factory.annotation.Value
-import org.springframework.boot.WebApplicationType
 import org.springframework.boot.context.event.ApplicationReadyEvent
+import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationListener
 import org.springframework.stereotype.Component
 
@@ -25,18 +26,22 @@ class VertxApp : CoroutineVerticle(), ApplicationListener<ApplicationReadyEvent>
     }
 
     @Autowired
+    private lateinit var applicationContext: ApplicationContext
+
+    @Autowired
     private lateinit var adsService: AdsService
 
-    @Value("\${spring.main.web-application-type:NONE}")
-    private lateinit var webApplicationType: WebApplicationType
-
+    @Autowired
+    private lateinit var properties: VertxProperties
 
     override suspend fun start() {
 
         val router = Router.router(vertx).apply {
             this.get("/empty").coroutineHandler { it.response().end("empty") }
             this.get("/exposeTo").coroutineHandler {
-                adsService.exposeFor((1..100).random().toString())
+                it.response().end(Json.encode(
+                        adsService.exposeFor((1..100).random().toString())
+                ))
             }
         }
 
@@ -57,16 +62,17 @@ class VertxApp : CoroutineVerticle(), ApplicationListener<ApplicationReadyEvent>
                     fn(ctx)
                 } catch (e: Exception) {
                     ctx.fail(e)
+                    logger.info("Catch exception", e)
                 }
             }
         }
     }
 
     override fun onApplicationEvent(p0: ApplicationReadyEvent) {
-        if (WebApplicationType.NONE != webApplicationType) {
+        if (properties.enable) {
             val vertx = Vertx.vertx()!!
-            vertx.deployVerticle(this::class.java.name)
-            logger.info("vertx deployed")
+            vertx.deployVerticle(applicationContext.getBean(this::class.java))
+            logger.info("Vertx deployed")
         }
     }
 }
