@@ -1,0 +1,11 @@
+version: "3.8"
+services:
+  app:
+    image: haopoboy/ads-exposure-test:dev
+    ports:
+      - "80:8080"
+  fortio:
+    image: fortio/fortio
+    ports:
+      - "8080:8080"
+    command: server
