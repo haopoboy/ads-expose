@@ -18,7 +18,7 @@ class CacheServiceTests {
 
     @Test
     fun adsByIndex() {
-        assertThat(impl.ads(0))
+        assertThat(impl.ads(0)).isNotNull
     }
 
     @Test
