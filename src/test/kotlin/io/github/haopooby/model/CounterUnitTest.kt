@@ -14,12 +14,10 @@ class CounterUnitTest {
     @Test
     fun allowedAndIncrease() {
         Counter().apply {
-            assertThat(this.allowed()).isTrue()
-            this.increase()
-            assertThat(this.allowed()).isTrue()
-            this.increase()
-            assertThat(this.allowed()).isTrue()
-            this.increase()
+            for (i in 1..ads.capNum) {
+                assertThat(this.allowed()).isTrue()
+                this.increase()
+            }
             assertThat(this.allowed()).isFalse()
         }
     }
