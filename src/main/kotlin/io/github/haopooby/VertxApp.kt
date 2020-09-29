@@ -1,6 +1,6 @@
 package io.github.haopooby
 
-import io.github.haopooby.config.VertxProperties
+import io.github.haopooby.config.AppProperties
 import io.github.haopooby.service.AdsService
 import io.vertx.core.Vertx
 import io.vertx.core.json.Json
@@ -32,7 +32,7 @@ class VertxApp : CoroutineVerticle(), ApplicationListener<ApplicationReadyEvent>
     private lateinit var adsService: AdsService
 
     @Autowired
-    private lateinit var properties: VertxProperties
+    private lateinit var properties: AppProperties
 
     override suspend fun start() {
 
@@ -69,7 +69,7 @@ class VertxApp : CoroutineVerticle(), ApplicationListener<ApplicationReadyEvent>
     }
 
     override fun onApplicationEvent(p0: ApplicationReadyEvent) {
-        if (properties.enable) {
+        if (properties.vertx.enable) {
             val vertx = Vertx.vertx()!!
             vertx.deployVerticle(applicationContext.getBean(this::class.java))
             logger.info("Vertx deployed")
