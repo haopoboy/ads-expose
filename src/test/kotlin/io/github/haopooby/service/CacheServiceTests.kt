@@ -30,4 +30,9 @@ class CacheServiceTests {
     fun countersByKey() {
         assertThat(impl.counters("id")).isNotNull
     }
+
+    @Test
+    fun forUser() {
+        assertThat(impl.forUser("userId")).isNotNull
+    }
 }

@@ -17,6 +17,6 @@ data class Counter(val ads: Ads = Ads(),
         }
     }
 
-    fun allowed() = count.estimatedSize() < ads.capNum
+    fun allowed() = count.estimatedSize() < ads.capNum || !ads.exposedLimited
     fun increase() = count.put(count.estimatedSize(), Unit)
 }

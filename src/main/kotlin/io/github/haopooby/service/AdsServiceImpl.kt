@@ -1,5 +1,6 @@
 package io.github.haopooby.service
 
+import com.github.benmanes.caffeine.cache.Cache
 import io.github.haopooby.entity.Ads
 import io.github.haopooby.entity.Exposed
 import io.github.haopooby.entity.ExposedRepository
@@ -8,6 +9,7 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
+import java.util.concurrent.ConcurrentMap
 
 @Service
 class AdsServiceImpl : AdsService {
@@ -16,7 +18,7 @@ class AdsServiceImpl : AdsService {
     private lateinit var exposedRepository: ExposedRepository
 
     @Autowired
-    private lateinit var cacheService: CacheService
+    internal lateinit var cacheService: CacheService
 
     override fun exposeFor(userId: String): Ads {
         val ads = exposeValid(userId)
@@ -34,12 +36,48 @@ class AdsServiceImpl : AdsService {
         var ads: Ads
         var counter: Counter
         do {
-            ads = random()
-            counter = cacheService.counters("$userId${ads.id}")
+            ads = random(userId)
+            counter = cacheService.counters("$userId:${ads.id}") { Counter(ads) }
         } while (!counter.allowed())
+
         counter.increase()
         return ads
     }
 
-    override fun random() = cacheService.ads((0..9_999).random())
+    override fun random(userId: String): Ads {
+        val adsCount = count()
+        val blockedList = cacheService.forUser(userId)
+                .blockedList()
+                .map { it.ads.id }
+        val blockedRatio = blockedList.size.toDouble() / adsCount
+        val preferredRandom = blockedRatio <= 0.5
+        return if (preferredRandom) {
+            cacheService.ads((0 until adsCount).random())
+        } else {
+            randomFrom(blockedList)
+        }
+    }
+
+    /**
+     * @blockedList uses to filter the list
+     */
+    @Suppress("UNCHECKED_CAST")
+    fun randomFrom(blockedList: List<String> = listOf()): Ads {
+        val ads = cacheService.adsAs(Cache::class.java).asMap() as ConcurrentMap<String, Ads>
+
+        val filtered = ads
+                .filterNot { blockedList.contains(it.value.id) }
+                .mapNotNull { it.value }
+
+        return if (filtered.isEmpty()) {
+            Ads.NO_ADS
+        } else {
+            filtered.random()
+        }
+    }
+
+    fun count(): Int {
+        val cache = cacheService.adsAs(Cache::class.java)
+        return cache.estimatedSize().toInt()
+    }
 }
