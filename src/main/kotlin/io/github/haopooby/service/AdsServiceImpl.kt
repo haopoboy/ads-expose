@@ -52,6 +52,7 @@ class AdsServiceImpl : AdsService {
                 .toSet()
 
         val blockedRatio = blockedList.size.toDouble() / adsCount
+        // TODO: Find the best ratio for performance
         val preferredRandom = blockedRatio <= 0.5
         return if (preferredRandom) {
             cacheService.ads((0 until adsCount).random())
