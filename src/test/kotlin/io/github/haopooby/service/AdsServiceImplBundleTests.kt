@@ -81,7 +81,7 @@ class AdsServiceImplBundleTests {
             val grouped = (1..10).map {
                 impl.exposeValid(it.toString())
             }.groupBy { it }
-            assertThat(grouped).hasSize(1)
+            assertThat(grouped).doesNotContainKey(Ads.NO_ADS)
         }
 
         @Test
@@ -119,7 +119,7 @@ class AdsServiceImplBundleTests {
                 impl.exposeValid(it.toString())
             }.groupBy { it }
 
-            assertThat(grouped).hasSize(10)
+            assertThat(grouped).doesNotContainKey(Ads.NO_ADS)
         }
 
         @Test
