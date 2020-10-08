@@ -128,7 +128,7 @@ class AdsServiceImplBundleTests {
                 impl.exposeValid("userId")
             }.groupBy { it }
 
-            assertThat(grouped).hasSize(10)
+            assertThat(grouped).doesNotContainKey(Ads.NO_ADS)
         }
 
         @Test
