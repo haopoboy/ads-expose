@@ -58,7 +58,7 @@ class AdsServiceImplBundleTests {
 
         @Test
         fun `random() 10 times`() {
-            val grouped = (1..10).map { _ ->
+            val grouped = (1..10).map {
                 impl.random()
             }.groupBy { it }
 
@@ -68,7 +68,7 @@ class AdsServiceImplBundleTests {
 
         @Test
         fun `random() 10 times from same user`() {
-            val grouped = (1..10).map { _ ->
+            val grouped = (1..10).map {
                 impl.random("userId")
             }.groupBy { it }
 
@@ -77,8 +77,16 @@ class AdsServiceImplBundleTests {
         }
 
         @Test
+        fun `exposeValid() 10 times`() = shouldNotBeInfinity {
+            val grouped = (1..10).map {
+                impl.exposeValid(it.toString())
+            }.groupBy { it }
+            assertThat(grouped).hasSize(1)
+        }
+
+        @Test
         fun `exposeValid() 10 times from same user`() = shouldNotBeInfinity {
-            val grouped = (1..10).map { _ ->
+            val grouped = (1..10).map {
                 impl.exposeValid("userId")
             }.groupBy { it }
             assertThat(grouped).hasSize(2)
@@ -106,8 +114,17 @@ class AdsServiceImplBundleTests {
         }
 
         @Test
+        fun `exposeValid() 30 times`() = shouldNotBeInfinity {
+            val grouped = (1..30).map {
+                impl.exposeValid(it.toString())
+            }.groupBy { it }
+
+            assertThat(grouped).hasSize(10)
+        }
+
+        @Test
         fun `exposeValid() 30 times from same user`() = shouldNotBeInfinity {
-            val grouped = (1..30).map { _ ->
+            val grouped = (1..30).map {
                 impl.exposeValid("userId")
             }.groupBy { it }
 
@@ -115,8 +132,17 @@ class AdsServiceImplBundleTests {
         }
 
         @Test
+        fun `exposeValid() 35 times`() = shouldNotBeInfinity {
+            val grouped = (1..35).map {
+                impl.exposeValid(it.toString())
+            }.groupBy { it }
+
+            assertThat(grouped).hasSize(10)
+        }
+
+        @Test
         fun `exposeValid() 35 times from same user`() = shouldNotBeInfinity {
-            val grouped = (1..35).map { _ ->
+            val grouped = (1..35).map {
                 impl.exposeValid("userId")
             }.groupBy { it }
 
