@@ -61,19 +61,19 @@ class AdsServiceImpl : AdsService {
     }
 
     /**
-     * @blockedList uses to filter the list
+     * @blockedList remove blocked from the list to get allowed list
      */
     @Suppress("UNCHECKED_CAST")
     fun randomWith(blockedList: Set<Ads> = setOf()): Ads {
         val ads = cacheService.adsAs(Cache::class.java).asMap() as ConcurrentMap<String, Ads>
-        val filtered = ads
+        val allowed = ads
                 .mapNotNull { it.value }
                 .toSet() - blockedList
 
-        return if (filtered.isEmpty()) {
+        return if (allowed.isEmpty()) {
             Ads.NO_ADS
         } else {
-            filtered.random()
+            allowed.random()
         }
     }
 
