@@ -54,7 +54,6 @@ class DataInitializer : ApplicationListener<ApplicationReadyEvent> {
                     .map { Ads("Ads $it") }.toList()
                     .let { adsRepository.saveAll(it) }
 
-            println(adsRepository.count())
             progress.stepBy(last)
         }
 

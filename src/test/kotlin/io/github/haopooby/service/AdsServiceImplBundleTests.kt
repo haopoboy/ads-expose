@@ -48,6 +48,7 @@ class AdsServiceImplBundleTests {
         @AfterEach
         fun clear() {
             impl.cacheService.counters().clear()
+            impl.cacheService.countersByUserId().clear()
         }
 
         @Test
@@ -76,7 +77,7 @@ class AdsServiceImplBundleTests {
         }
 
         @Test
-        fun `exposeValid() 10 times`() = shouldNotBeInfinity {
+        fun `exposeValid() 10 times from same user`() = shouldNotBeInfinity {
             val grouped = (1..10).map { _ ->
                 impl.exposeValid("userId")
             }.groupBy { it }
@@ -96,6 +97,7 @@ class AdsServiceImplBundleTests {
         @AfterEach
         fun clear() {
             impl.cacheService.counters().clear()
+            impl.cacheService.countersByUserId().clear()
         }
 
         @Test

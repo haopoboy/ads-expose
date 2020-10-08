@@ -37,10 +37,23 @@ class VertxApp : CoroutineVerticle(), ApplicationListener<ApplicationReadyEvent>
     override suspend fun start() {
 
         val router = Router.router(vertx).apply {
+            // For comparison
             this.get("/empty").coroutineHandler { it.response().end("empty") }
+            this.get("/randomExposeTo").coroutineHandler {
+                it.response().end(Json.encode(adsService.random()))
+            }
+
+            // Candidates
             this.get("/exposeTo").coroutineHandler {
+                val userCount = it.queryParam("userCount").firstOrNull()?.toInt() ?: 100
                 it.response().end(Json.encode(
-                        adsService.exposeFor((1..100).random().toString())
+                        adsService.exposeFor((1..userCount).random().toString())
+                ))
+            }
+            this.get("/exposeTo/:id").coroutineHandler {
+                val id = it.pathParam("id")
+                it.response().end(Json.encode(
+                        adsService.exposeFor(id)
                 ))
             }
         }

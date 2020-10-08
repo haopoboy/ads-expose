@@ -37,7 +37,7 @@ class AdsServiceImpl : AdsService {
         var counter: Counter
         do {
             ads = random(userId)
-            counter = cacheService.counters("$userId:${ads.id}") { Counter(ads) }
+            counter = cacheService.counters(userId, ads)
         } while (!counter.allowed())
 
         counter.increase()
@@ -48,13 +48,15 @@ class AdsServiceImpl : AdsService {
         val adsCount = count()
         val blockedList = cacheService.forUser(userId)
                 .blockedList()
-                .map { it.ads.id }
+                .map { it.ads }
+                .toSet()
+
         val blockedRatio = blockedList.size.toDouble() / adsCount
         val preferredRandom = blockedRatio <= 0.5
         return if (preferredRandom) {
             cacheService.ads((0 until adsCount).random())
         } else {
-            randomFrom(blockedList)
+            randomWith(blockedList)
         }
     }
 
@@ -62,12 +64,11 @@ class AdsServiceImpl : AdsService {
      * @blockedList uses to filter the list
      */
     @Suppress("UNCHECKED_CAST")
-    fun randomFrom(blockedList: List<String> = listOf()): Ads {
+    fun randomWith(blockedList: Set<Ads> = setOf()): Ads {
         val ads = cacheService.adsAs(Cache::class.java).asMap() as ConcurrentMap<String, Ads>
-
         val filtered = ads
-                .filterNot { blockedList.contains(it.value.id) }
                 .mapNotNull { it.value }
+                .toSet() - blockedList
 
         return if (filtered.isEmpty()) {
             Ads.NO_ADS

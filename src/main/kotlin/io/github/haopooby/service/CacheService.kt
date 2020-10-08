@@ -11,12 +11,14 @@ interface CacheService {
     fun ads(index: Int): Ads
     fun counters(): Cache
     fun counters(key: String, action: () -> Counter): Counter
-    fun counters(key: String): Counter?
+    fun counters(userId: String, ads: Ads): Counter
 
     @Suppress(names = ["UNCHECKED_CAST"])
     fun forUser(userId: String): ForUser
 
     interface ForUser {
-        fun blockedList(): List<Counter>
+        fun blockedList(): Set<Counter>
     }
+
+    fun countersByUserId(): Cache
 }
