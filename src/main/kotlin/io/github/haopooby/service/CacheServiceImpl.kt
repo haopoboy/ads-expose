@@ -23,16 +23,16 @@ class CacheServiceImpl : CacheService {
     override fun counters(userId: String, ads: Ads) =
             counters("$userId:${ads.id}") {
                 val counter = Counter(ads)
-                countersByUserIdRc1(userId)[ads.id] = counter
+                countersByUserId(userId)[ads.id] = counter
                 counter
             }
 
     override fun countersByUserId() = manager.getCache("userCounters")!!
-    fun countersByUserIdRc1(userId: String) = countersByUserId().get(userId) {
+    fun countersByUserId(userId: String) = countersByUserId().get(userId) {
         ConcurrentHashMap<String, Counter>()
     }!!
 
-    override fun forUser(userId: String) = UserImpl(countersByUserIdRc1(userId))
+    override fun forUser(userId: String) = UserImpl(countersByUserId(userId))
 
     class UserImpl(private val counters: Map<String, Counter>,
                    private val blockedList: Set<Counter> = blockedList(counters)
