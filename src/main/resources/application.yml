@@ -1,3 +1,5 @@
 spring:
   profiles:
-    active: default,jpa
+    include: default,local,jpa
+  cache:
+     type: CAFFEINE

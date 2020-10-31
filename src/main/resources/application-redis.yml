@@ -1,0 +1,4 @@
+spring:
+  profile: redis
+  cache:
+    type: REDIS

@@ -13,8 +13,7 @@ class AdsServiceImplTests {
 
     @Test
     fun exposeValid() {
-        val id = "id"
-        impl.exposeValid(id).apply {
+        impl.exposeValid("userId").apply {
             assertThat(this).isNotNull
         }
     }

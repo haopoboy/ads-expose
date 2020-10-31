@@ -12,5 +12,11 @@ class Ads(
         var title: String? = null,
         var url: String? = null,
         var capIntervalMin: Int = 60,
-        var capNum: Int = 3
-) : Uuid()
+        var capNum: Int = 3,
+        var exposedLimited: Boolean = capNum >= 0
+) : Uuid() {
+
+    companion object {
+        val NO_ADS = Ads("No ads", capNum = -1)
+    }
+}

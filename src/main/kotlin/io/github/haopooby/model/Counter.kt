@@ -8,16 +8,16 @@ import java.util.*
 import java.util.concurrent.TimeUnit
 
 data class Counter(val ads: Ads = Ads(),
-                   val count: @NonNull Cache<String, String> = buildCache(ads)
+                   val count: @NonNull Cache<String, Unit> = buildCache(ads)
 ) {
     companion object {
-        fun buildCache(ads: Ads): @NonNull Cache<String, String> {
+        fun buildCache(ads: Ads): @NonNull Cache<String, Unit> {
             return Caffeine.newBuilder()
                     .expireAfterWrite(ads.capIntervalMin.toLong(), TimeUnit.MINUTES)
-                    .build<String, String>()
+                    .build()
         }
     }
 
-    fun allowed() = count.estimatedSize() < ads.capNum
-    fun increase() = count.put(UUID.randomUUID().toString(), "")
+    fun allowed() = count.estimatedSize() < ads.capNum || !ads.exposedLimited
+    fun increase() = count.put(UUID.randomUUID().toString(), Unit)
 }

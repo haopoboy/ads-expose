@@ -1,13 +1,14 @@
 package io.github.haopooby.service
 
+import com.github.benmanes.caffeine.cache.Cache
 import io.github.haopooby.entity.Ads
 import io.github.haopooby.entity.Exposed
 import io.github.haopooby.entity.ExposedRepository
-import io.github.haopooby.model.Counter
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
+import java.util.concurrent.ConcurrentMap
 
 @Service
 class AdsServiceImpl : AdsService {
@@ -16,30 +17,46 @@ class AdsServiceImpl : AdsService {
     private lateinit var exposedRepository: ExposedRepository
 
     @Autowired
-    private lateinit var cacheService: CacheService
+    internal lateinit var cacheService: CacheService
 
-    override fun exposeFor(userId: String): Ads {
-        val ads = exposeValid(userId)
-        // Able to restore from scheduler
-        GlobalScope.launch {
-            exposedRepository.save(Exposed(userId, ads.id))
-        }
-        return ads
-    }
+    override fun exposeFor(userId: String) = exposeValid(userId)
 
     /**
      * Random expose Ads until it's allowed.
      */
     fun exposeValid(userId: String): Ads {
         var ads: Ads
-        var counter: Counter
+        var counter: CacheService.ForUserCounter
         do {
-            ads = random()
-            counter = cacheService.counters("$userId${ads.id}")
+            ads = random(userId)
+            counter = cacheService.counter(userId, ads)
         } while (!counter.allowed())
-        counter.increase()
+
+        Exposed(userId, ads.id).let {
+            counter.put(it)
+            GlobalScope.launch {
+                exposedRepository.save(it)
+            }
+        }
         return ads
     }
 
-    override fun random() = cacheService.ads((0..9_999).random())
+    override fun random(userId: String) = cacheService.forUser(userId).random()
+
+    /**
+     * @blockedList remove blocked from the list to get allowed list
+     */
+    @Suppress("UNCHECKED_CAST")
+    fun randomWith(blockedList: Set<Ads> = setOf()): Ads {
+        val ads = cacheService.ads().castAs(Cache::class.java).asMap() as ConcurrentMap<String, Ads>
+        val allowed = ads
+                .mapNotNull { it.value }
+                .toSet() - blockedList
+
+        return if (allowed.isEmpty()) {
+            Ads.NO_ADS
+        } else {
+            allowed.random()
+        }
+    }
 }

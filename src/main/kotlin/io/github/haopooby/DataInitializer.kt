@@ -1,5 +1,6 @@
 package io.github.haopooby
 
+import io.github.haopooby.config.AppProperties
 import io.github.haopooby.entity.Ads
 import io.github.haopooby.entity.AdsRepository
 import io.github.haopooby.service.CacheService
@@ -23,6 +24,9 @@ class DataInitializer : ApplicationListener<ApplicationReadyEvent> {
     @Autowired
     private lateinit var cacheService: CacheService
 
+    @Autowired
+    private lateinit var properties: AppProperties
+
     override fun onApplicationEvent(p0: ApplicationReadyEvent) {
         initAds()
         initCaches()
@@ -32,16 +36,25 @@ class DataInitializer : ApplicationListener<ApplicationReadyEvent> {
         if (adsRepository.count() > 0) {
             logger.info("Found Ads, skip initialization")
         }
-        val size = 1_000
-        val page = 10
-        ProgressBar("Persisting Ads", (size * page).toLong()).use { progress ->
+        val page = 10L
+        val size = properties.ads.count / page
+        val last = properties.ads.count % page
+        ProgressBar("Persisting Ads", (size * page + last)).use { progress ->
             (1..page).toList().parallelStream().forEach { _ ->
                 (1..size).toList()
                         .parallelStream()
                         .map { Ads("Ads $it") }.toList()
                         .let { adsRepository.saveAll(it) }
-                progress.stepBy(size.toLong())
+                progress.stepBy(size)
             }
+
+            val start = page * size + last
+            (start until (start + last)).toList()
+                    .parallelStream()
+                    .map { Ads("Ads $it") }.toList()
+                    .let { adsRepository.saveAll(it) }
+
+            progress.stepBy(last)
         }
 
         logger.info("${Utils.formatAsDecimal(adsRepository.count())} Ads persisted")

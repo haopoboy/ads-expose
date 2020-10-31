@@ -1,6 +1,6 @@
 package io.github.haopooby
 
-import io.github.haopooby.config.VertxProperties
+import io.github.haopooby.config.AppProperties
 import io.github.haopooby.service.AdsService
 import io.vertx.core.Vertx
 import io.vertx.core.json.Json
@@ -32,15 +32,28 @@ class VertxApp : CoroutineVerticle(), ApplicationListener<ApplicationReadyEvent>
     private lateinit var adsService: AdsService
 
     @Autowired
-    private lateinit var properties: VertxProperties
+    private lateinit var properties: AppProperties
 
     override suspend fun start() {
 
         val router = Router.router(vertx).apply {
+            // For comparison
             this.get("/empty").coroutineHandler { it.response().end("empty") }
+            this.get("/randomExposeTo").coroutineHandler {
+                it.response().end(Json.encode(adsService.random()))
+            }
+
+            // Candidates
             this.get("/exposeTo").coroutineHandler {
+                val userCount = it.queryParam("userCount").firstOrNull()?.toInt() ?: 100
                 it.response().end(Json.encode(
-                        adsService.exposeFor((1..100).random().toString())
+                        adsService.exposeFor((1..userCount).random().toString())
+                ))
+            }
+            this.get("/exposeTo/:id").coroutineHandler {
+                val id = it.pathParam("id")
+                it.response().end(Json.encode(
+                        adsService.exposeFor(id)
                 ))
             }
         }
@@ -69,7 +82,7 @@ class VertxApp : CoroutineVerticle(), ApplicationListener<ApplicationReadyEvent>
     }
 
     override fun onApplicationEvent(p0: ApplicationReadyEvent) {
-        if (properties.enable) {
+        if (properties.vertx.enable) {
             val vertx = Vertx.vertx()!!
             vertx.deployVerticle(applicationContext.getBean(this::class.java))
             logger.info("Vertx deployed")
