@@ -1,10 +1,13 @@
 package io.github.haopooby.service
 
+import io.github.haopooby.Profiles
 import io.github.haopooby.entity.Ads
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.*
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.test.context.ActiveProfiles
+import org.springframework.test.context.junit.jupiter.EnabledIf
 import java.time.Duration
 
 class AdsServiceImplBundleTests {
@@ -18,22 +21,30 @@ class AdsServiceImplBundleTests {
                 action.invoke()
             }
 
-    @SpringBootTest(properties = ["app.ads.count=0"])
     @Nested
     @DisplayName("when zero ads")
-    inner class ZeroAds {
+    inner class ZeroAds : AbstractZeroAds()
+
+    @Nested
+    @DisplayName("when zero ads with Redis")
+    @EnabledIf(expression = "#{environment.acceptsProfiles('${Profiles.REDIS}')}", loadContext = true)
+    @ActiveProfiles(Profiles.REDIS)
+    inner class RedisZeroAds : AbstractZeroAds()
+
+    @SpringBootTest(properties = ["app.ads.count=0"])
+    abstract class AbstractZeroAds {
 
         @Autowired
         private lateinit var impl: AdsServiceImpl
 
         @Test
         fun `random() should be no ads`() {
-            assertThat(impl.random().title).isEqualTo(Ads.NO_ADS.title)
+            assertThat(impl.random()).isEqualTo(Ads.NO_ADS)
         }
 
         @Test
         fun `exposeValid() should be no ads`() {
-            assertThat(impl.exposeValid("userId").title).isEqualTo(Ads.NO_ADS.title)
+            assertThat(impl.exposeValid("userId")).isEqualTo(Ads.NO_ADS)
         }
     }
 
@@ -47,8 +58,7 @@ class AdsServiceImplBundleTests {
 
         @AfterEach
         fun clear() {
-            impl.cacheService.counters().clear()
-            impl.cacheService.countersByUserId().clear()
+            impl.cacheService.exposed().clear()
         }
 
         @Test
@@ -104,8 +114,7 @@ class AdsServiceImplBundleTests {
 
         @AfterEach
         fun clear() {
-            impl.cacheService.counters().clear()
-            impl.cacheService.countersByUserId().clear()
+            impl.cacheService.exposed().clear()
         }
 
         @Test
@@ -142,6 +151,16 @@ class AdsServiceImplBundleTests {
 
         @Test
         fun `exposeValid() 35 times from same user`() = shouldNotBeInfinity {
+            val grouped = (1..35).map {
+                impl.exposeValid("userId")
+            }.groupBy { it }
+
+            assertThat(grouped).hasSize(11)
+            assertThat(grouped.values.last().first()).isEqualTo(Ads.NO_ADS)
+        }
+
+        @Test
+        fun `exposeValid() 35 times from same user rc`() {
             val grouped = (1..35).map {
                 impl.exposeValid("userId")
             }.groupBy { it }

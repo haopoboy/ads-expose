@@ -4,7 +4,6 @@ import com.github.benmanes.caffeine.cache.Cache
 import io.github.haopooby.entity.Ads
 import io.github.haopooby.entity.Exposed
 import io.github.haopooby.entity.ExposedRepository
-import io.github.haopooby.model.Counter
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import org.springframework.beans.factory.annotation.Autowired
@@ -20,53 +19,36 @@ class AdsServiceImpl : AdsService {
     @Autowired
     internal lateinit var cacheService: CacheService
 
-    override fun exposeFor(userId: String): Ads {
-        val ads = exposeValid(userId)
-        // Able to restore from scheduler
-        GlobalScope.launch {
-            exposedRepository.save(Exposed(userId, ads.id))
-        }
-        return ads
-    }
+    override fun exposeFor(userId: String) = exposeValid(userId)
 
     /**
      * Random expose Ads until it's allowed.
      */
     fun exposeValid(userId: String): Ads {
         var ads: Ads
-        var counter: Counter
+        var counter: CacheService.ForUserCounter
         do {
             ads = random(userId)
-            counter = cacheService.counters(userId, ads)
+            counter = cacheService.counter(userId, ads)
         } while (!counter.allowed())
 
-        counter.increase()
+        Exposed(userId, ads.id).let {
+            counter.put(it)
+            GlobalScope.launch {
+                exposedRepository.save(it)
+            }
+        }
         return ads
     }
 
-    override fun random(userId: String): Ads {
-        val adsCount = count()
-        val blockedList = cacheService.forUser(userId)
-                .blockedList()
-                .map { it.ads }
-                .toSet()
-
-        val blockedRatio = blockedList.size.toDouble() / adsCount
-        // TODO: Find the best ratio for performance
-        val preferredRandom = blockedRatio <= 0.5
-        return if (preferredRandom) {
-            cacheService.ads((0 until adsCount).random())
-        } else {
-            randomWith(blockedList)
-        }
-    }
+    override fun random(userId: String) = cacheService.forUser(userId).random()
 
     /**
      * @blockedList remove blocked from the list to get allowed list
      */
     @Suppress("UNCHECKED_CAST")
     fun randomWith(blockedList: Set<Ads> = setOf()): Ads {
-        val ads = cacheService.adsAs(Cache::class.java).asMap() as ConcurrentMap<String, Ads>
+        val ads = cacheService.ads().castAs(Cache::class.java).asMap() as ConcurrentMap<String, Ads>
         val allowed = ads
                 .mapNotNull { it.value }
                 .toSet() - blockedList
@@ -76,10 +58,5 @@ class AdsServiceImpl : AdsService {
         } else {
             allowed.random()
         }
-    }
-
-    fun count(): Int {
-        val cache = cacheService.adsAs(Cache::class.java)
-        return cache.estimatedSize().toInt()
     }
 }
